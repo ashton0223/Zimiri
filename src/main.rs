@@ -30,7 +30,12 @@ use serenity::framework::standard::{
     }
 };
 
-pub use image_fun::{rotate_image, overlay_bi_flag, vec_image};
+pub use image_fun::{
+    rotate_image, 
+    overlay_bi_flag, 
+    vec_image,
+    invert_image,
+};
 
 #[derive(Debug)]
 struct ZimiriError {
@@ -113,7 +118,7 @@ async fn main() {
 #[command]
 async fn rps(ctx: &Context, msg: &Message) -> CommandResult {
     let mut game_message: String;
-    let mut reaction_emoji = ' ';
+    let mut reaction_emoji = "".to_string();
     let bot_position: i32;
     // placeholder
     let mut first_bot_message = msg.clone();
@@ -144,9 +149,10 @@ async fn rps(ctx: &Context, msg: &Message) -> CommandResult {
         // Gets the char from the reaction.
         // Unwrapping is fine here because if there is a reaction
         // there must be an emoji.
-        reaction_emoji = reaction.as_inner_ref().emoji.as_data().chars().next().unwrap();
+        reaction_emoji = reaction.as_inner_ref().emoji.as_data();
+        let reaction_char = reaction_emoji.chars().next().unwrap();
         
-        let position = char_in_vec(&emojis, reaction_emoji);
+        let position = char_in_vec(&emojis, reaction_char);
 
         // Position will never be -1, so it is returned if not
         // rock, paper, or scissors.
@@ -218,13 +224,6 @@ async fn bi(ctx: &Context, msg: &Message) -> CommandResult {
 async fn invert(ctx: &Context, msg: &Message) -> CommandResult {
     modify_single_image(ctx, msg, invert_image).await?;
     Ok(())
-}
-
-fn invert_image(img: DynamicImage) -> DynamicImage {
-    let mut inverted = img.clone();
-    inverted.invert();
-
-    inverted
 }
 
 async fn modify_single_image(

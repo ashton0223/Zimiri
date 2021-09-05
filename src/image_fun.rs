@@ -51,6 +51,13 @@ pub fn rotate_image(img: DynamicImage) -> DynamicImage {
     ImageRgba8(rotate90(&img))
 }
 
+pub fn invert_image(img: DynamicImage) -> DynamicImage {
+    let mut inverted = img.clone();
+    inverted.invert();
+
+    inverted
+}
+
 fn average_pixel(block: Rgba<u8>, input: Rgba<u8>) -> Rgba<u8> {
     image::Rgba([
         (block[0] / 2) + (input[0] / 2),
