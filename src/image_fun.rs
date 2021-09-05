@@ -1,8 +1,11 @@
-use std::error::Error;
+extern crate image;
+
+//use std::error::Error;
 
 use image::imageops::rotate90;
 use image::DynamicImage;
 use image::DynamicImage::ImageRgba8;
+use image::ImageError;
 use image::Rgba;
 use image::GenericImage;
 use image::GenericImageView;
@@ -18,7 +21,8 @@ macro_rules! os_separator{
 }
 
 // TODO: handle errors better, test on linux
-pub fn overlay_bi_flag(img: DynamicImage) -> DynamicImage {
+pub fn overlay_bi_flag(vec: &Vec<u8>) -> Vec<u8> {
+    let img = image::load_from_memory(vec).unwrap();
     let mut new_img = img.clone();
     let bi_bytes = include_bytes!(concat!(
         "..",
@@ -31,7 +35,7 @@ pub fn overlay_bi_flag(img: DynamicImage) -> DynamicImage {
         Ok(img) => img,
         Err(_e) => {
             // Just return original image if there is an error for now
-            return img;
+            return vec.to_vec();
         }
     };
 
@@ -44,18 +48,21 @@ pub fn overlay_bi_flag(img: DynamicImage) -> DynamicImage {
             ));
         }
     }
-    new_img
+    vec_image(&new_img).unwrap()
 }
 
-pub fn rotate_image(img: DynamicImage) -> DynamicImage {
-    ImageRgba8(rotate90(&img))
+pub fn rotate_image(vec: &Vec<u8>) -> Vec<u8> {
+    let img = image::load_from_memory(vec).unwrap();
+    let new_img = ImageRgba8(rotate90(&img));
+    vec_image(&new_img).unwrap()
 }
 
-pub fn invert_image(img: DynamicImage) -> DynamicImage {
+pub fn invert_image(vec: &Vec<u8>) -> Vec<u8> {
+    let img = image::load_from_memory(vec).unwrap();
     let mut inverted = img.clone();
     inverted.invert();
 
-    inverted
+    vec_image(&inverted).unwrap()
 }
 
 fn average_pixel(block: Rgba<u8>, input: Rgba<u8>) -> Rgba<u8> {
@@ -67,10 +74,10 @@ fn average_pixel(block: Rgba<u8>, input: Rgba<u8>) -> Rgba<u8> {
     ])
 }
 
-pub fn vec_image(img: &DynamicImage) -> Result<Vec<u8>, Box<dyn Error>> {
+pub fn vec_image(img: &DynamicImage) -> Result<Vec<u8>, ImageError> {
     let mut vec: Vec<u8> = Vec::new();
     if let Err(e) = img.write_to(&mut vec, image::ImageOutputFormat::Png) {
-        return Err(Box::new(e))
+        return Err(e);
     };
     
     Ok(vec)

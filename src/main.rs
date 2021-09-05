@@ -1,4 +1,3 @@
-extern crate image;
 extern crate rand;
 
 mod image_fun;
@@ -9,10 +8,6 @@ use std::fmt;
 use std::time::Duration;
 use std::collections::HashMap;
 use std::fs;
-
-use image::DynamicImage;
-use image::ImageError;
-
 
 use rand::{thread_rng, Rng};
 
@@ -65,12 +60,12 @@ impl From<SerenityError> for ZimiriError {
         ZimiriError::new(&err.to_string())
     }
 }
-
+/*
 impl From<ImageError> for ZimiriError {
     fn from(err: ImageError) -> Self {
         ZimiriError::new(&err.to_string())
     }
-}
+}*/
 
 #[group]
 #[commands(ping, repeat, rotate, bi, invert, rps)]
@@ -229,7 +224,7 @@ async fn invert(ctx: &Context, msg: &Message) -> CommandResult {
 async fn modify_single_image(
     ctx: &Context, 
     msg: &Message, 
-    operation: fn(img: DynamicImage) -> DynamicImage,
+    operation: fn(vec: &Vec<u8>) -> Vec<u8>,
 ) -> Result<(), ZimiriError> {
     // Are there any attachments?
     if msg.attachments.len() == 0 {
@@ -242,10 +237,9 @@ async fn modify_single_image(
 
                 let image_file = attachment.download().await?;
                 
-                let image = image::load_from_memory(&image_file)?;
-                let image = operation(image);
+                let vec = operation(&image_file);
 
-                send_image_message(ctx, &image, msg).await?;
+                send_image_message(ctx, &vec, msg).await?;
             }
         }
     }
@@ -262,14 +256,7 @@ fn process_vec(vec: &Vec<u8>) -> AttachmentType {
     }
 }
 
-async fn send_image_message(ctx: &Context, img: &DynamicImage, msg: &Message) -> Result<(), ZimiriError> {
-    let vec = match vec_image(img) {
-        Ok(vec) => vec,
-        Err(_e) => {        
-            // Just returning the error breaks everything for some reason
-            return Err(ZimiriError::new("Unable to rotate image"));
-        },
-    };
+async fn send_image_message(ctx: &Context, vec: &Vec<u8>, msg: &Message) -> Result<(), ZimiriError> {
     let file = process_vec(&vec);
     msg.channel_id.send_message(ctx, |m| {
         m.content("");
